@@ -23,3 +23,6 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Devbox generated files
+.devbox/

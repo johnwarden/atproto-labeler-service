@@ -1,22 +1,55 @@
-# Bluesky Test Labeler - Production Setup Guide
+# Bluesky Labeler Starter Kit
 
-A complete guide to setting up and deploying a Bluesky labeler using the AT Protocol and Skyware libraries.
+A starter kit for setting up and deploying an AT Protocol labeler using [@skyware/labeler](https://skyware.js.org/guides/labeler/) labeler and fly.io.
 
-## Overview
+This automates some of the steps in the [Skyware Labeler Getting Started guide](https://skyware.js.org/guides/labeler/introduction/getting-started/). 
 
-This repository contains a simple Bluesky labeler that applies contextual labels to posts via HTTP API. The labeler was built using [@skyware/labeler](https://skyware.js.org/guides/labeler/) and deployed to Fly.io with persistent storage.
+Also, instead of the "earth/wind/fire/water" labeler from that guide, it creates a simple labeler API where you can add a label to a post given a bluesky URL:
 
-**Live Example**: [`testlabeler1.bsky.social`](https://bsky.app/profile/testlabeler1.bsky.social)
+    curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
+
 
 ## Architecture
 
-- **HTTP API Endpoint**: `/label?uri={{URI}}` for manual post labeling
-- **Single Label**: `needs-context`
+- **HTTP API Endpoint**: `/label?uri={{URI}}&label={{LABEL}}` for manual post labeling (label parameter is optional)
 - **Platform**: Node.js with Express.js
 - **Storage**: SQLite with persistent volumes on Fly.io
 - **Deployment**: Docker container on Fly.io
 
-## Complete Setup Process
+## Development Environment Setup
+
+- Node.js (v18 or later)
+- npm
+- [just](https://github.com/casey/just) command runner
+
+### Using Devbox (Optional)
+
+This project includes a `devbox.json` configuration for easy development environment setup using [Devbox](https://www.jetify.com/devbox/).
+
+#### Install devbox if you haven't already
+curl -fsSL https://get.jetify.com/devbox | bash
+
+#### Option 1: Use devbox shell (temporary environment)
+```bash
+# Enter the development shell
+devbox shell
+```
+
+#### Option 2: Use devbox with direnv (automatic environment)
+```bash
+# Generate .envrc for direnv integration
+devbox generate direnv
+
+# Allow direnv to load the environment
+direnv allow
+```
+
+This will automatically install Node.js, npm, and just when you enter the project directory.
+
+
+## Labeler Setup
+
+This registers your labeler account as a labeler in atproto
 
 ### Create Bluesky Account Labeler Account
 
@@ -24,62 +57,77 @@ This repository contains a simple Bluesky labeler that applies contextual labels
 
 Create .env
 
-  cp env.template .env
+    cp env.example .env
 
 Then enter the labeler account DID and password
 
-### Setup Labeler Configuration
+### Run Setup Script
 
 ```bash
-just setup-labeler
+just setup
 ```
-
-### Copy Signing Key to .env
-
-Allow the setup to generate a signing key and update the environment variable in .env 
 
 ### Fly.io Deployment
 
-#### Initialize Fly.io app:
 ```bash
-fly apps create testlabeler1
+# Deploy everything (creates app, sets secrets, creates volume, deploys)
+just fly-setup
 ```
 
-#### Configure secrets:
+Creates, configures, and deploys a fly app. Uses LABELER_DID, LABELER_PASSWORD, and SIGNING_KEY from .env
+
+Or deploy manually step-by-step:
+
 ```bash
+# Individual steps
+fly apps create your-app-name
 fly secrets set LABELER_DID="$LABELER_DID"
-fly secrets set LABELER_PASSWORD="$LABELER_PASSWORD" 
+fly secrets set LABELER_PASSWORD="$LABELER_PASSWORD"
 fly secrets set SIGNING_KEY="$SIGNING_KEY"
-```
-
-#### Setup persistent storage:
-```bash
-# Create volume for SQLite database
 fly volumes create labeler_data --region sjc --size 1
-```
-
-#### Deploy:
-```bash
 fly deploy
 ```
 
-### 6. Verify Deployment
+
+## Confirm Everything Is Working
+
+### Verify Deployment
 
 ```bash
 # Check health
-curl -s "https://testlabeler1.fly.dev:8082/health" | jq .
-
-# Test labeling
-curl -s "https://testlabeler1.fly.dev:8082/label?uri=https://bsky.app/profile/user.bsky.social/post/abc123" | jq .
+just health
 ```
+
+### Check Labeler Status
+
+```bash
+just labeler-status
+```
+
+### Subscribe to Label
+
+Go to you labeler account profile at https://bsky.app/profile/YOUR_LABELER_HANDLE. You should see a "subscribe" button to subscribe to the labeler.
+
+### Add a Label to a Post
+
+```bash
+just test-api
+```
+
+This should add a label to:
+
+  https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s 
+
+If you have subscribed to your label, you should see your label on this post.
+
 
 ## Key Learnings
 
 ### Labeler Setup Process
 
 1. **Clear vs Recreate**: 
-   - `npx @skyware/labeler setup` = Complete reset with new signing key
-   - `npx @skyware/labeler recreate` = Refresh existing configuration
+   - `clear + setup` = Complete reset with updated configuration
+   - `recreate` = Refresh existing configuration
 
 2. **HTTPS Requirement**: Labeler setup command requires HTTPS URLs, not HTTP
 
@@ -96,32 +144,35 @@ curl -s "https://testlabeler1.fly.dev:8082/label?uri=https://bsky.app/profile/us
 
 ### Manual Labeling
 
-```bash
-# Add needs-context label to a post
-curl "https://testlabeler1.fly.dev:8082/label?uri=https://bsky.app/profile/user.bsky.social/post/abc123"
+The API supports applying labels to posts with an optional label parameter:
 
-# Supports both bsky.app URLs and at:// URIs  
-curl "https://testlabeler1.fly.dev:8082/label?uri=at://did:plc:xyz/app.bsky.feed.post/abc123"
+- **Without label parameter**: Uses the first label defined in `labels.json` (default behavior)
+- **With label parameter**: Uses the specified label if it exists in `labels.json`
+- **Invalid label**: Returns error with list of available labels
+
+```bash
+# Add default label to a post using justfile (recommended)
+just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s"
+
+# Add specific label to a post using justfile
+just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+
+# Or use curl directly (default label)
+curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s"
+
+# Or use curl directly (specific label)
+curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
+
 ```
 
 ### Query Labels
 
 ```bash
-# Query all labels from labeler
-curl "https://testlabeler1.fly.dev/xrpc/com.atproto.label.queryLabels"
+# Query all labels using justfile (recommended)
+just query-labels
 
-# Check labeler service record
-curl "https://bsky.social/xrpc/com.atproto.repo.getRecord?repo=did:plc:mzu4yf7auecpifkyv6r2jb2v&collection=app.bsky.labeler.service&rkey=self"
-```
-
-## Management Commands (Justfile)
-
-Install [`just`](https://github.com/casey/just):
-```bash
-# macOS
-brew install just
-
-# Other platforms: https://github.com/casey/just#installation
+# Or use curl directly
+curl "https://your-app.fly.dev/xrpc/com.atproto.label.queryLabels"
 ```
 
 ### Daily Operations
@@ -130,8 +181,14 @@ brew install just
 # Check system status
 just status
 
-# Add label to post
-just add-label "https://bsky.app/profile/user.bsky.social/post/abc123"
+# Add default label to post
+just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s"
+
+# Add specific label to post
+just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+
+# Query all labels
+just query-labels
 
 # View logs
 just logs
@@ -141,6 +198,15 @@ just deploy
 
 # Health check
 just health
+
+# Test API
+just test-api
+
+# Restart application
+just restart
+
+# Clear database (careful!)
+just clear-db
 ```
 
 
@@ -155,27 +221,9 @@ just health
 | `SIGNING_KEY` | Label signing key | `c364841c99116f...` |
 | `DB_PATH` | Database path | `/mnt/labels.db` |
 | `PORT` | Main server port | `8080` |
-| `API_PORT` | Main server port | `8080` |
+| `API_PORT` | API server port | `8081` |
+| `NODE_ENV` | Environment mode | `development` or `productiont` |
 
-### Fly.io Configuration
-
-```toml
-# fly.toml key sections
-[env]
-  NODE_ENV = 'production'
-  PORT = '8080'
-  DB_PATH = '/mnt/labels.db'
-
-[[services]]
-  internal_port = 8080  # Main labeler
-  
-[[services]]  
-  internal_port = 8081  # HTTP API
-
-[[mounts]]
-  source = "labeler_data"
-  destination = "/mnt"
-```
 
 ## Common Issues & Solutions
 
@@ -201,22 +249,6 @@ just health
 ```javascript
 server.start({ port: port, host: '0.0.0.0' }, callback);
 ```
-
-**Problem**: Database wiped on restart
-
-**Solution**: Use persistent volumes:
-```bash
-fly volumes create labeler_data --region sjc --size 1
-# Add [[mounts]] section to fly.toml
-```
-
-## Production Considerations
-
-1. **Security**: Use strong passwords and secure signing keys
-2. **Monitoring**: Set up log monitoring and alerting
-3. **Scaling**: Consider horizontal scaling for high traffic
-4. **Backup**: Regular database backups from persistent volume
-5. **Rate Limiting**: Implement rate limiting for API endpoints
 
 ## Resources
 

@@ -1,0 +1,11 @@
+[
+  {
+    "identifier": "needs-context",
+    "name": "Readers Added Context",
+    "description": "The Community Notes algorithm has rated a note on this post as \"helpful\"",
+    "adultOnly": false,
+    "severity": "alert",
+    "blurs": "none",
+    "defaultSetting": "warn"
+  }
+]

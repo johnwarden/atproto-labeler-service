@@ -18,8 +18,8 @@ RUN groupadd -r labeler && useradd -r -g labeler labeler
 RUN chown -R labeler:labeler /app
 USER labeler
 
-# Expose port (fly.io will set PORT environment variable)
-EXPOSE 8080
+# Expose ports (fly.io will set PORT and API_PORT environment variables)
+EXPOSE 8080 8081
 
 # Start the application
 CMD ["node", "index.js"]

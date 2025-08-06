@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { LabelerServer } from '@skyware/labeler';
 import { Bot } from '@skyware/bot';
 import express from 'express';
+import fs from 'fs';
 
 console.log('🚀 Starting Bluesky Labeler with HTTP API...');
 
@@ -58,6 +59,16 @@ async function startHttpApiServer(labelerServer) {
     const app = express();
     const apiPort = process.env.API_PORT || 8081;
 
+    // Load available labels from labels.json
+    let availableLabels = [];
+    try {
+        const labelsData = fs.readFileSync('./labels.json', 'utf8');
+        availableLabels = JSON.parse(labelsData);
+        console.log(`📋 Loaded ${availableLabels.length} available labels:`, availableLabels.map(l => l.identifier).join(', '));
+    } catch (error) {
+        console.error('❌ Failed to load labels.json:', error.message);
+        process.exit(1);
+    }
     
     // Create a bot instance for handle resolution
     const apiBot = new Bot();
@@ -99,16 +110,42 @@ async function startHttpApiServer(labelerServer) {
     // Endpoint to manually label posts
     app.get('/label', async (req, res) => {
         try {
-            const { uri } = req.query;
+            const { uri, label: requestedLabel } = req.query;
             
             if (!uri) {
                 return res.status(400).json({
                     error: 'Missing uri parameter',
-                    usage: 'GET /label?uri=<at_uri_or_bsky_url>'
+                    usage: 'GET /label?uri=<at_uri_or_bsky_url>&label=<label_identifier>',
+                    availableLabels: availableLabels.map(l => l.identifier)
                 });
             }
             
-            console.log(`🏷️ Manual labeling request: ${uri}`);
+            // Determine which label to use
+            let labelVal = requestedLabel;
+            if (!labelVal || labelVal.trim() === '') {
+                // Use the first label as default
+                labelVal = availableLabels[0]?.identifier;
+                if (!labelVal) {
+                    return res.status(500).json({
+                        error: 'No labels available',
+                        message: 'No labels found in labels.json'
+                    });
+                }
+                console.log(`🏷️ No label specified, using default: ${labelVal}`);
+            } else {
+                // Validate that the requested label exists
+                const labelExists = availableLabels.some(l => l.identifier === labelVal);
+                if (!labelExists) {
+                    return res.status(400).json({
+                        error: 'Invalid label',
+                        message: `Label '${labelVal}' not found`,
+                        availableLabels: availableLabels.map(l => l.identifier)
+                    });
+                }
+                console.log(`🏷️ Using requested label: ${labelVal}`);
+            }
+            
+            console.log(`🏷️ Manual labeling request: ${uri} with label: ${labelVal}`);
             
             // Convert to at:// URI if needed
             const atUri = await convertToAtUri(uri);
@@ -118,14 +155,14 @@ async function startHttpApiServer(labelerServer) {
             const label = {
                 src: process.env.LABELER_DID,
                 uri: atUri,
-                val: 'needs-context',
+                val: labelVal,
                 cts: new Date().toISOString(),
             };
             
             // Save the label
             await labelerServer.saveLabel(label);
             
-            console.log(`✅ Successfully applied "needs-context" label to: ${atUri}`);
+            console.log(`✅ Successfully applied "${labelVal}" label to: ${atUri}`);
             console.log(`📊 Label details: ${JSON.stringify(label, null, 2)}`);
             
             // Return success response
@@ -134,7 +171,7 @@ async function startHttpApiServer(labelerServer) {
                 message: 'Label applied successfully',
                 label: {
                     uri: atUri,
-                    value: 'needs-context',
+                    value: labelVal,
                     timestamp: label.cts
                 }
             });
