@@ -38,7 +38,7 @@ devbox shell
 #### Option 2: Use devbox with direnv (automatic environment)
 ```bash
 # Generate .envrc for direnv integration
-devbox generate direnv
+ devbox generate direnv --env-file .env
 
 # Allow direnv to load the environment
 direnv allow
