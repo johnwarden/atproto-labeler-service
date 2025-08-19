@@ -1,6 +1,5 @@
 # fly.toml app configuration file generated for testlabeler1
 
-app = 'testlabeler1'
 primary_region = 'sjc'
 
 [build]

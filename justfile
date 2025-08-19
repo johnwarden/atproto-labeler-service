@@ -3,6 +3,10 @@
 
 set dotenv-load := true
 
+
+ENDPOINT := "https://$LABELER_DOMAIN"
+
+
 # Default recipe - show available commands
 default:
     @just --list
@@ -26,8 +30,8 @@ env:
 info:
     @echo "ℹ️ Labeler Information:"
     @echo "DID: ${LABELER_DID}"
-    @echo "Production URL: https://$APP_NAME.fly.dev"
-    @echo "API URL: https://$APP_NAME.fly.dev:8081"
+    @echo "Production URL: {{ENDPOINT}}"
+    @echo "API URL: {{ENDPOINT}}:8081"
     @echo ""
     @echo "✅ Database: PERSISTENT (/mnt/labels.db on volume)"
     @echo "💾 Volume: labeler_data (1GB, encrypted)"
@@ -35,19 +39,18 @@ info:
 # Check service health endpoints
 health:
     @echo "\n🏥 Checking API server health..."
-    @curl -s "https://$APP_NAME.fly.dev:8081/health" | jq . || echo "API server: ❌ Not responding"
+    @curl -s "{{ENDPOINT}}:8081/health" | jq . || echo "API server: ❌ Not responding"
 
 # Show recent application logs
 logs:
-    fly logs
+    fly logs -a $APP_NAME
 
 # Set up or update labeler configuration
 # Only saves keys to .env if setup succeeds (atomic operation)
 setup:
-    just restart
     @echo "🚀 Setting up labeler with CLI arguments..."
     @echo "Using DID: ${LABELER_DID}"
-    @echo "Using endpoint: https://$APP_NAME.fly.dev"
+    @echo "Using endpoint: {{ENDPOINT}}"
     @echo "Using labels config: ./labels.json"
     @echo ""
     @echo "⚠️  You will need to enter the PLC token from your email when prompted."
@@ -76,7 +79,6 @@ clear:
 
 # Recreate the labeler -- fully non-interactive
 recreate:
-    just restart
     npx johnwarden-labeler recreate --did="${LABELER_DID}" --password="${LABELER_PASSWORD}"
 
 # Add a new label definition
@@ -90,26 +92,24 @@ add-label-def:
 # Query labels from AT Protocol endpoint
 query-labels:
     @echo "🏷️ Querying all labels from AT Protocol endpoint..."
-    curl -s "https://$APP_NAME.fly.dev/xrpc/com.atproto.label.queryLabels" | jq .
+    curl -s "{{ENDPOINT}}/xrpc/com.atproto.label.queryLabels" | jq .
 
 # Add label to a post (optional second argument for label, defaults to first label in labels.json)
 add-label URI LABEL="":
     @echo "🏷️ Adding label to: {{URI}}"
-    curl -s "https://$APP_NAME.fly.dev:8081/label?uri={{URI}}&label={{LABEL}}" | jq .
-    @echo ""
-    @echo "✅ Label request completed. Check logs with: just logs"
+    curl -s "{{ENDPOINT}}:8081/label?uri={{URI}}&label={{LABEL}}" | jq .
 
 # Query labels for a specific URI
 query-uri URI:
     @echo "🔍 Querying labels for: {{URI}}"
-    curl -s "https://$APP_NAME.fly.dev/xrpc/com.atproto.label.queryLabels?uris={{URI}}" | jq .
+    curl -s "{{ENDPOINT}}/xrpc/com.atproto.label.queryLabels?uris={{URI}}" | jq .
 
 # Test API endpoint with example URL
 test-api:
     @echo "🧪 Testing API endpoint with example URL..."
-    curl -s "https://$APP_NAME.fly.dev:8081/health" | jq .
+    curl -s "{{ENDPOINT}}:8081/health" | jq .
     @echo "\n🧪 Testing label endpoint (default label)..."
-    curl -s "https://$APP_NAME.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
+    curl -s "{{ENDPOINT}}:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
 
 # === Development Commands (Local Server) ===
 
@@ -149,12 +149,17 @@ test-api-dev:
 setup-volume:
     @echo "💾 Setting up persistent storage volume..."
     @echo "1️⃣ Creating volume for SQLite database..."
-    fly volumes create labeler_data --region sjc --size 1
+    fly volumes create labeler_data --region sjc --size 1  --app $APP_NAME
     @echo "2️⃣ Volume created successfully!"
+
+setup-cert:
+    fly certs add $LABELER_DOMAIN --app $APP_NAME
+
 
 # Deploy to Fly.io
 deploy:
-    fly deploy
+    # Todo: pass labeler DID here, not as secret
+    fly deploy --app $APP_NAME
 
 # Complete Fly.io deployment setup (creates app, sets secrets, creates volume, deploys)
 fly-setup:
@@ -162,15 +167,15 @@ fly-setup:
     @echo "1️⃣ Creating Fly.io app..."
     fly apps create $APP_NAME
     @echo "2️⃣ Setting secrets from environment..."
-    fly secrets set LABELER_DID="${LABELER_DID}"
-    fly secrets set LABELER_PASSWORD="${LABELER_PASSWORD}"
-    fly secrets set SIGNING_KEY="${SIGNING_KEY}"
+    fly secrets set LABELER_DID="${LABELER_DID}" --app $APP_NAME
+    fly secrets set LABELER_PASSWORD="${LABELER_PASSWORD}" --app $APP_NAME
+    fly secrets set SIGNING_KEY="${SIGNING_KEY}" --app $APP_NAME
     @echo "3️⃣ Creating persistent storage volume..."
-    setup-volume
+    just setup-volume
     @echo "4️⃣ Deploying application..."
-    deploy
+    just deploy
     @echo "✅ Deployment complete!"
-    @echo "🔗 Your labeler is available at: https://$APP_NAME.fly.dev"
+    @echo "🔗 Your labeler is available at: {{ENDPOINT}}"
     @echo "💡 Next: Run 'just setup' to configure your labeler"
 
 # Restart the Fly.io application
@@ -179,11 +184,11 @@ restart:
 
 # Check Fly.io app status
 fly-status:
-    fly status
+    fly status --app $APP_NAME
     
 # Open Fly.io dashboard
 fly-dashboard:
-    fly dashboard
+    fly dashboard --app $APP_NAME
     
 # === Development ===
 

@@ -59,7 +59,7 @@ Create .env
 
     cp env.example .env
 
-Then enter the labeler account DID and password
+Then enter the labeler account DID and password, as well as the domain where you will host the labeler.
 
 ### Run Setup Script
 
@@ -74,20 +74,17 @@ just setup
 just fly-setup
 ```
 
-Creates, configures, and deploys a fly app. Uses LABELER_DID, LABELER_PASSWORD, and SIGNING_KEY from .env
+Creates, configures, and deploys a fly app. Uses LABELER_DID, LABELER_PASSWORD, and SIGNING_KEY from .env. 
 
-Or deploy manually step-by-step:
+### Custom Domain DNS and SSL Cert Setup
 
-```bash
-# Individual steps
-fly apps create your-app-name
-fly secrets set LABELER_DID="$LABELER_DID"
-fly secrets set LABELER_PASSWORD="$LABELER_PASSWORD"
-fly secrets set SIGNING_KEY="$SIGNING_KEY"
-fly volumes create labeler_data --region sjc --size 1
-fly deploy
-```
+I have had trouble getting labelers working when using https://$APP_NAME.fly.dev as the endpoint. I've also had trouble using ngrok. But using custom domains things seem to work better.
 
+To setup a custom domain, make sure you have the right $LABELER_DOMAIN in .env, and then, after running the fly setup, run:
+
+   just setup-cert
+
+Then, setup your DNS entries as instructed. 
 
 ## Confirm Everything Is Working
 

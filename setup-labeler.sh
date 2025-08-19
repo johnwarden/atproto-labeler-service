@@ -22,7 +22,7 @@ TEMP_OUTPUT_FILE=$(mktemp)
 if npx johnwarden-labeler setup \
     --did="${LABELER_DID}" \
     --password="${LABELER_PASSWORD}" \
-    --endpoint="https://${APP_NAME}.fly.dev" \
+    --endpoint="${ENDPOINT}" \
     --signing-key="$TEMP_SIGNING_KEY" \
     --labels-config="./labels.json" 2>&1 | tee "$TEMP_OUTPUT_FILE"; then
     
