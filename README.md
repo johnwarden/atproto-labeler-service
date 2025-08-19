@@ -1,6 +1,6 @@
 # Bluesky Labeler Starter Kit
 
-A starter kit for setting up and deploying an AT Protocol labeler using [@skyware/labeler](https://skyware.js.org/guides/labeler/) labeler and fly.io.
+A starter kit for setting up and deploying an AT Protocol labeler using [@skyware/labeler](https://skyware.js.org/guides/labeler/introduction/getting-started/) labeler and fly.io.
 
 This automates some of the steps in the [Skyware Labeler Getting Started guide](https://skyware.js.org/guides/labeler/introduction/getting-started/). 
 
@@ -249,7 +249,7 @@ server.start({ port: port, host: '0.0.0.0' }, callback);
 
 ## Resources
 
-- [Skyware Labeler Documentation](https://skyware.js.org/guides/labeler/)
+- [Skyware Labeler Documentation](https://skyware.js.org/guides/labeler/introduction/getting-started/)
 - [AT Protocol Labeler Specification](https://atproto.com/specs/label)
 - [Bluesky Moderation Guide](https://blueskyweb.xyz/blog/03-12-2024-moderation)
 - [Fly.io Documentation](https://fly.io/docs/)
