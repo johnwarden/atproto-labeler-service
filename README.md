@@ -8,10 +8,14 @@ Also, instead of the "earth/wind/fire/water" labeler from that guide, it creates
 
     curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
 
+You can also create negative labels (which remove/negate previous labels) by adding `neg=true`:
+
+    curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context&neg=true"
+
 
 ## Architecture
 
-- **HTTP API Endpoint**: `/label?uri={{URI}}&label={{LABEL}}` for manual post labeling (label parameter is optional)
+- **HTTP API Endpoint**: `/label?uri={{URI}}&label={{LABEL}}&neg={{true|false}}` for manual post labeling (label and neg parameters are optional)
 - **Platform**: Node.js with Express.js
 - **Storage**: SQLite with persistent volumes on Fly.io
 - **Deployment**: Docker container on Fly.io
@@ -141,10 +145,11 @@ If you have subscribed to your label, you should see your label on this post.
 
 ### Manual Labeling
 
-The API supports applying labels to posts with an optional label parameter:
+The API supports applying labels to posts with optional label and neg parameters:
 
 - **Without label parameter**: Uses the first label defined in `labels.json` (default behavior)
 - **With label parameter**: Uses the specified label if it exists in `labels.json`
+- **With neg=true**: Creates a negative label that removes/negates a previous instance of the same label
 - **Invalid label**: Returns error with list of available labels
 
 ```bash
@@ -154,11 +159,17 @@ just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl
 # Add specific label to a post using justfile
 just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
 
+# Add negative label to remove/negate a previous label using justfile
+just add-negative-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+
 # Or use curl directly (default label)
 curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s"
 
 # Or use curl directly (specific label)
 curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
+
+# Or use curl directly (negative label to remove previous label)
+curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context&neg=true"
 
 ```
 
@@ -183,6 +194,9 @@ just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl
 
 # Add specific label to post
 just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+
+# Add negative label to remove/negate a previous label
+just add-negative-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
 
 # Query all labels
 just query-labels

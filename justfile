@@ -19,6 +19,10 @@ labeler-status:
     @echo "🔍 Checking labeler service record..."
     curl -s "https://bsky.social/xrpc/com.atproto.repo.getRecord?repo=${LABELER_DID}&collection=app.bsky.labeler.service&rkey=self" | jq .
 
+
+check-labeler-endpoint:
+    goat resolve $LABELER_DID | jq -r '.service[] | select(.type == "AtprotoLabeler") | .serviceEndpoint'
+
 # Check environment variables
 env:
     @echo "🔧 Environment variables status:"
@@ -99,6 +103,11 @@ add-label URI LABEL="":
     @echo "🏷️ Adding label to: {{URI}}"
     curl -s "{{ENDPOINT}}:8081/label?uri={{URI}}&label={{LABEL}}" | jq .
 
+# Add negative label to a post (removes/negates a previous label)
+negate-label URI LABEL="":
+    @echo "🏷️ Adding NEGATIVE label to: {{URI}}"
+    curl -s "{{ENDPOINT}}:8081/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
+
 # Query labels for a specific URI
 query-uri URI:
     @echo "🔍 Querying labels for: {{URI}}"
@@ -122,8 +131,11 @@ dev:
 add-label-dev URI LABEL="":
     @echo "🏷️ Adding label to: {{URI}} (local dev)"
     curl -s "http://localhost:8081/label?uri={{URI}}&label={{LABEL}}" | jq .
-    @echo ""
-    @echo "✅ Dev label request completed."
+
+negate-label-dev URI LABEL="":
+    @echo "🏷️ Adding label to: {{URI}} (local dev)"
+    curl -s "http://localhost:8081/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
+
 
 # Query labels from local development server
 query-labels-dev:

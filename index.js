@@ -110,14 +110,30 @@ async function startHttpApiServer(labelerServer) {
     // Endpoint to manually label posts
     app.get('/label', async (req, res) => {
         try {
-            const { uri, label: requestedLabel } = req.query;
+            const { uri, label: requestedLabel, neg } = req.query;
             
             if (!uri) {
                 return res.status(400).json({
                     error: 'Missing uri parameter',
-                    usage: 'GET /label?uri=<at_uri_or_bsky_url>&label=<label_identifier>',
+                    usage: 'GET /label?uri=<at_uri_or_bsky_url>&label=<label_identifier>&neg=<true|false>',
                     availableLabels: availableLabels.map(l => l.identifier)
                 });
+            }
+            
+            // Parse and validate the neg parameter
+            let isNegative = false;
+            if (neg !== undefined) {
+                if (neg === 'true' || neg === '1') {
+                    isNegative = true;
+                } else if (neg === 'false' || neg === '0' || neg === '') {
+                    isNegative = false;
+                } else {
+                    return res.status(400).json({
+                        error: 'Invalid neg parameter',
+                        message: 'neg parameter must be "true", "false", "1", "0", or omitted',
+                        usage: 'GET /label?uri=<at_uri_or_bsky_url>&label=<label_identifier>&neg=<true|false>'
+                    });
+                }
             }
             
             // Determine which label to use
@@ -145,7 +161,7 @@ async function startHttpApiServer(labelerServer) {
                 console.log(`🏷️ Using requested label: ${labelVal}`);
             }
             
-            console.log(`🏷️ Manual labeling request: ${uri} with label: ${labelVal}`);
+            console.log(`🏷️ Manual labeling request: ${uri} with label: ${labelVal}${isNegative ? ' (NEGATIVE)' : ''}`);
             
             // Convert to at:// URI if needed
             const atUri = await convertToAtUri(uri);
@@ -157,21 +173,23 @@ async function startHttpApiServer(labelerServer) {
                 uri: atUri,
                 val: labelVal,
                 cts: new Date().toISOString(),
+                ...(isNegative && { neg: true })
             };
             
             // Save the label
             await labelerServer.saveLabel(label);
             
-            console.log(`✅ Successfully applied "${labelVal}" label to: ${atUri}`);
+            console.log(`✅ Successfully applied "${labelVal}"${isNegative ? ' (NEGATIVE)' : ''} label to: ${atUri}`);
             console.log(`📊 Label details: ${JSON.stringify(label, null, 2)}`);
             
             // Return success response
             res.json({
                 success: true,
-                message: 'Label applied successfully',
+                message: `${isNegative ? 'Negative label' : 'Label'} applied successfully`,
                 label: {
                     uri: atUri,
                     value: labelVal,
+                    negative: isNegative,
                     timestamp: label.cts
                 }
             });
@@ -195,8 +213,9 @@ async function startHttpApiServer(labelerServer) {
     // Start the API server
     app.listen(apiPort, '0.0.0.0', () => {
         console.log(`✅ HTTP API server started on 0.0.0.0:${apiPort}`);
-        console.log(`🔗 Manual labeling endpoint: http://0.0.0.0:${apiPort}/label?uri=<uri>`);
+        console.log(`🔗 Manual labeling endpoint: http://0.0.0.0:${apiPort}/label?uri=<uri>&label=<label>&neg=<true|false>`);
         console.log(`💡 Example: curl "http://0.0.0.0:${apiPort}/label?uri=https://bsky.app/profile/user.bsky.social/post/abc123"`);
+        console.log(`💡 Negative label example: curl "http://0.0.0.0:${apiPort}/label?uri=https://bsky.app/profile/user.bsky.social/post/abc123&neg=true"`);
     });
 }
 
