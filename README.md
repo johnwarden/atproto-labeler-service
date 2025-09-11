@@ -6,16 +6,15 @@ This automates some of the steps in the [Skyware Labeler Getting Started guide](
 
 Also, instead of the "earth/wind/fire/water" labeler from that guide, it creates a simple labeler API where you can add a label to a post given a bluesky URL:
 
-    curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
+    curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
 
 You can also create negative labels (which remove/negate previous labels) by adding `neg=true`:
 
-    curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context&neg=true"
+    curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context&neg=true"
 
 
 ## Architecture
 
-- **HTTP API Endpoint**: `/label?uri={{URI}}&label={{LABEL}}&neg={{true|false}}` for manual post labeling (label and neg parameters are optional)
 - **Platform**: Node.js with Express.js
 - **Storage**: SQLite with persistent volumes on Fly.io
 - **Deployment**: Docker container on Fly.io
@@ -49,7 +48,6 @@ direnv allow
 ```
 
 This will automatically install Node.js, npm, and just when you enter the project directory.
-
 
 ## Labeler Setup
 
@@ -162,15 +160,6 @@ just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl
 # Add negative label to remove/negate a previous label using justfile
 just add-negative-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
 
-# Or use curl directly (default label)
-curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s"
-
-# Or use curl directly (specific label)
-curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
-
-# Or use curl directly (negative label to remove previous label)
-curl "https://your-app.fly.dev:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context&neg=true"
-
 ```
 
 ### Query Labels
@@ -216,8 +205,6 @@ just test-api
 # Restart application
 just restart
 
-# Clear database (careful!)
-just clear-db
 ```
 
 
@@ -232,7 +219,7 @@ just clear-db
 | `SIGNING_KEY` | Label signing key | `c364841c99116f...` |
 | `DB_PATH` | Database path | `/mnt/labels.db` |
 | `PORT` | Main server port | `8080` |
-| `API_PORT` | API server port | `8081` |
+| `INTERNAL_API_PORT` | API server port | `8081` |
 | `NODE_ENV` | Environment mode | `development` or `productiont` |
 
 

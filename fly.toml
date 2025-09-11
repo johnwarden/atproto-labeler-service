@@ -7,7 +7,7 @@ primary_region = 'sjc'
 [env]
   NODE_ENV = 'production'
   PORT = '8080'
-  API_PORT = '8081'
+  INTERNAL_API_PORT = '8081'
   DB_PATH = '/mnt/labels.db'
 
 [[services]]
@@ -34,28 +34,6 @@ primary_region = 'sjc'
     timeout = "2s"
     grace_period = "1s"
 
-# API server for manual labeling
-[[services]]
-  protocol = "tcp"
-  internal_port = 8081
-  processes = ["app"]
-
-  [[services.ports]]
-    port = 8081
-    handlers = ["tls", "http"]
-
-  [services.concurrency]
-    type = "connections"
-    hard_limit = 10
-    soft_limit = 8
-
-  [[services.tcp_checks]]
-    interval = "15s"
-    timeout = "2s"
-    grace_period = "1s"
-    port = 8081
-    method = "GET"
-    path = "/health"
 
 [processes]
   app = "node index.js"

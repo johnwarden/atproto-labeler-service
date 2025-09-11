@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.2",
-    "johnwarden-labeler": "^0.2.2"
+    "johnwarden-labeler": "^0.2.2",
+    "typescript": "^5.3.2"
   },
   "author": "Jonathan Warden",
   "license": "MIT",

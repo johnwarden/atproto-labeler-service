@@ -18,7 +18,7 @@ RUN groupadd -r labeler && useradd -r -g labeler labeler
 RUN chown -R labeler:labeler /app
 USER labeler
 
-# Expose ports (fly.io will set PORT and API_PORT environment variables)
+# Expose ports (fly.io will set PORT and INTERNAL_API_PORT environment variables)
 EXPOSE 8080 8081
 
 # Start the application

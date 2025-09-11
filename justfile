@@ -6,6 +6,12 @@ set dotenv-load := true
 
 ENDPOINT := "https://$LABELER_DOMAIN"
 
+# Port configuration
+MAIN_PORT := "$PORT"
+INTERNAL_API_HOST := "$APP_NAME.internal"
+INTERNAL_API_PORT := "$INTERNAL_API_PORT"
+INTERNAL_ENDPOINT := "http://" + INTERNAL_API_HOST + ":" + INTERNAL_API_PORT
+
 
 # Default recipe - show available commands
 default:
@@ -34,16 +40,16 @@ env:
 info:
     @echo "ℹ️ Labeler Information:"
     @echo "DID: ${LABELER_DID}"
-    @echo "Production URL: {{ENDPOINT}}"
-    @echo "API URL: {{ENDPOINT}}:8081"
+    @echo "AT Protocol URL: {{ENDPOINT}}"
+    @echo "Internal API URL: {{INTERNAL_ENDPOINT}}"
     @echo ""
     @echo "✅ Database: PERSISTENT (/mnt/labels.db on volume)"
     @echo "💾 Volume: labeler_data (1GB, encrypted)"
 
 # Check service health endpoints
 health:
-    @echo "\n🏥 Checking API server health..."
-    @curl -s "{{ENDPOINT}}:8081/health" | jq . || echo "API server: ❌ Not responding"
+    @curl -s "{{INTERNAL_ENDPOINT}}/health" | jq . || echo "API server: ❌ Not responding"
+
 
 # Show recent application logs
 logs:
@@ -101,12 +107,14 @@ query-labels:
 # Add label to a post (optional second argument for label, defaults to first label in labels.json)
 add-label URI LABEL="":
     @echo "🏷️ Adding label to: {{URI}}"
-    curl -s "{{ENDPOINT}}:8081/label?uri={{URI}}&label={{LABEL}}" | jq .
+    @echo "🔗 Using internal endpoint: {{INTERNAL_ENDPOINT}}"
+    curl -s "{{INTERNAL_ENDPOINT}}/label?uri={{URI}}&label={{LABEL}}" | jq .
 
 # Add negative label to a post (removes/negates a previous label)
 negate-label URI LABEL="":
     @echo "🏷️ Adding NEGATIVE label to: {{URI}}"
-    curl -s "{{ENDPOINT}}:8081/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
+    @echo "🔗 Using internal endpoint: {{INTERNAL_ENDPOINT}}"
+    curl -s "{{INTERNAL_ENDPOINT}}/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
 
 # Query labels for a specific URI
 query-uri URI:
@@ -115,10 +123,9 @@ query-uri URI:
 
 # Test API endpoint with example URL
 test-api:
-    @echo "🧪 Testing API endpoint with example URL..."
-    curl -s "{{ENDPOINT}}:8081/health" | jq .
-    @echo "\n🧪 Testing label endpoint (default label)..."
-    curl -s "{{ENDPOINT}}:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
+    @echo "🧪 Testing internal label endpoint (default label)..."
+    @echo "🔗 Using internal endpoint: {{INTERNAL_ENDPOINT}}"
+    curl -s "{{INTERNAL_ENDPOINT}}/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
 
 # === Development Commands (Local Server) ===
 
@@ -130,30 +137,43 @@ dev:
 # Add label to a post (local development server)
 add-label-dev URI LABEL="":
     @echo "🏷️ Adding label to: {{URI}} (local dev)"
-    curl -s "http://localhost:8081/label?uri={{URI}}&label={{LABEL}}" | jq .
+    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&label={{LABEL}}" | jq .
 
 negate-label-dev URI LABEL="":
-    @echo "🏷️ Adding label to: {{URI}} (local dev)"
-    curl -s "http://localhost:8081/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
+    @echo "🏷️ Adding NEGATIVE label to: {{URI}} (local dev)"
+    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
 
 
 # Query labels from local development server
 query-labels-dev:
     @echo "🏷️ Querying all labels from local AT Protocol endpoint..."
-    curl -s "http://localhost:8080/xrpc/com.atproto.label.queryLabels" | jq .
+    curl -s "http://localhost:{{MAIN_PORT}}/xrpc/com.atproto.label.queryLabels" | jq .
 
 # Query labels for a specific URI (local development server)
 query-uri-dev URI:
     @echo "🔍 Querying labels for: {{URI}} (local dev)"
-    curl -s "http://localhost:8080/xrpc/com.atproto.label.queryLabels?uris={{URI}}" | jq .
+    curl -s "http://localhost:{{MAIN_PORT}}/xrpc/com.atproto.label.queryLabels?uris={{URI}}" | jq .
 
 # Test local development API endpoints
 test-api-dev:
     @echo "🧪 Testing local development API endpoints..."
-    @echo "🔍 Health check:"
-    curl -s "http://localhost:8081/health"
+    @echo "🔍 Internal API health check:"
+    curl -s "http://localhost:{{INTERNAL_API_PORT}}/health"
     @echo "\n🧪 Testing label endpoint with example URL (default label):"
-    curl -s "http://localhost:8081/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
+    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
+
+# === Private Network Setup ===
+
+# Setup WireGuard connection to Fly.io private network (required for .internal DNS)
+setup-wireguard:
+    @echo "🔗 Setting up WireGuard connection to Fly.io private network..."
+    @echo "This allows access to {{INTERNAL_API_HOST}} from your local machine"
+    fly wireguard create
+
+# Get the direct IPv6 address for manual use
+get-private-ip:
+    @echo "🔍 Getting private IPv6 address..."
+    @fly machines list -a $APP_NAME -j | jq -r '.[0].private_ip' | head -1
 
 # === Deployment & Management ===
 

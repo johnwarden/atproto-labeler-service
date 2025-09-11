@@ -21,6 +21,15 @@ if (!process.env.SIGNING_KEY) {
     process.exit(1);
 }
 
+if ( !process.env.INTERNAL_API_PORT ) {
+    throw new Error('❌ Missing INTERNAL_API_PORT environment variable for internal API');
+}
+
+
+if ( !process.env.PORT ) {
+    throw new Error('❌ Missing PORT environment variable');
+}
+
 console.log('✅ Environment variables found, creating labeler server...');
 
 // Create labeler server with configuration
@@ -31,7 +40,7 @@ const server = new LabelerServer({
     ...(process.env.DB_PATH && { dbPath: process.env.DB_PATH }),
 });
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT;
 
 console.log('🔧 Starting labeler server on port ' + port);
 
@@ -56,8 +65,10 @@ server.start({ port: port, host: '0.0.0.0' }, async (error) => {
 async function startHttpApiServer(labelerServer) {
     console.log('🌐 Starting HTTP API server for manual labeling...');
     
-    const app = express();
-    const apiPort = process.env.API_PORT || 8081;
+    // Internal API configuration for /label endpoint
+    const internalApiPort = process.env.INTERNAL_API_PORT;
+    
+    console.log(`🔧 Internal API will run on private network port ${internalApiPort}`);
 
     // Load available labels from labels.json
     let availableLabels = [];
@@ -107,8 +118,11 @@ async function startHttpApiServer(labelerServer) {
         throw new Error(`Unsupported URI format: ${uri}`);
     }
     
-    // Endpoint to manually label posts
-    app.get('/label', async (req, res) => {
+    // Create internal API app for /label endpoint
+    const internalApp = express();
+    
+    // Endpoint to manually label posts (internal IPv6 only)
+    internalApp.get('/label', async (req, res) => {
         try {
             const { uri, label: requestedLabel, neg } = req.query;
             
@@ -203,19 +217,19 @@ async function startHttpApiServer(labelerServer) {
         }
     });
     
-    // Health check endpoint
-    app.get('/health', (req, res) => {
-        res.json({ status: 'ok', service: 'labeler-api' });
+    // Health check endpoint (internal API only)
+    internalApp.get('/health', (req, res) => {
+        res.json({ status: 'ok', service: 'labeler-internal-api' });
     });
   
-    console.log('🔧 Starting labeler API server on port ' + apiPort);
+    console.log('🔧 Starting internal labeler API server...');
 
-    // Start the API server
-    app.listen(apiPort, '0.0.0.0', () => {
-        console.log(`✅ HTTP API server started on 0.0.0.0:${apiPort}`);
-        console.log(`🔗 Manual labeling endpoint: http://0.0.0.0:${apiPort}/label?uri=<uri>&label=<label>&neg=<true|false>`);
-        console.log(`💡 Example: curl "http://0.0.0.0:${apiPort}/label?uri=https://bsky.app/profile/user.bsky.social/post/abc123"`);
-        console.log(`💡 Negative label example: curl "http://0.0.0.0:${apiPort}/label?uri=https://bsky.app/profile/user.bsky.social/post/abc123&neg=true"`);
+    // Start the internal API server (for /label endpoint)
+    // Bind to all interfaces (::) so it's accessible on the private network
+    internalApp.listen(internalApiPort, '::', () => {
+        console.log(`✅ Internal API server started on [::]:${internalApiPort}`);
+        console.log(`🔗 Manual labeling endpoint accessible via private network on port ${internalApiPort}`);
+        console.log(`💚 Internal health check: http://[::]:${internalApiPort}/health`);
     });
 }
 
