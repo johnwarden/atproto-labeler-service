@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { LabelerServer } from '@skyware/labeler';
-import { Bot } from '@skyware/bot';
+import { Client, simpleFetchHandler } from '@atcute/client';
 import express from 'express';
 import fs from 'fs';
 
@@ -80,13 +80,12 @@ async function startHttpApiServer(labelerServer) {
         console.error('❌ Failed to load labels.json:', error.message);
         process.exit(1);
     }
-    
-    // Create a bot instance for handle resolution
-    const apiBot = new Bot();
-    await apiBot.login({
-        identifier: process.env.LABELER_DID,
-        password: process.env.LABELER_PASSWORD || 'password',
-    });
+
+    const handler = simpleFetchHandler({ service: 'https://public.api.bsky.app' });
+    const client = new Client({ handler });
+
+    // Create XRPC client for handle resolution (no authentication needed for public endpoints)
+    // const client = new XRPC({ handler: { handle: 'https://bsky.social' } });
     
     // Utility function to convert bsky.app URLs to at:// URIs
     async function convertToAtUri(uri) {
@@ -103,9 +102,11 @@ async function startHttpApiServer(labelerServer) {
             const postId = bskyUrlMatch[2];
             
             try {
-                // Resolve handle to DID
-                const profile = await apiBot.getProfile(handle);
-                const did = profile.did;
+                // Resolve handle to DID using XRPC client
+                const response = await client.get('app.bsky.actor.getProfile', {
+                    params: { actor: handle }
+                });
+                const did = response.data.did;
                 
                 // Convert to at:// URI
                 return `at://${did}/app.bsky.feed.post/${postId}`;

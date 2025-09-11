@@ -17,7 +17,7 @@
     "starter-kit"
   ],
   "dependencies": {
-    "@skyware/bot": "^0.4.0",
+    "@atcute/client": "^4.0.3",
     "@skyware/labeler": "^0.2.0",
     "dotenv": "^16.3.1",
     "express": "^5.1.0"
