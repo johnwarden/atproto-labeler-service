@@ -1,23 +1,20 @@
-# Bluesky Labeler Starter Kit
+# ATProto Labeler Service
 
-A starter kit for setting up and deploying an AT Protocol labeler using [@skyware/labeler](https://skyware.js.org/guides/labeler/introduction/getting-started/) labeler and fly.io.
+This is a generic AT Protocol labeler service, with some utilities for making it easy to set up a labeler and deploy it to fly.io
 
-This automates some of the steps in the [Skyware Labeler Getting Started guide](https://skyware.js.org/guides/labeler/introduction/getting-started/). 
-
-Also, instead of the "earth/wind/fire/water" labeler from that guide, it creates a simple labeler API where you can add a label to a post given a bluesky URL:
+The service implements the public ATProto labeler API, as well as a private HTTP endpoint for adding and removing labels. It does not implement any labeling logic -- your applications can add labels by calling the internal labeler API. For example:
 
     curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
 
-You can also create negative labels (which remove/negate previous labels) by adding `neg=true`:
-
-    curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context&neg=true"
-
+This package helps you create the ATProto records needed for your labeler to be recognized, automating some of the steps in the [Skyware Labeler Getting Started guide](https://skyware.js.org/guides/labeler/introduction/getting-started/). 
 
 ## Architecture
 
 - **Platform**: Node.js with Express.js
-- **Storage**: SQLite with persistent volumes on Fly.io
 - **Deployment**: Docker container on Fly.io
+- **Storage**: SQLite with persistent volumes
+- **Command Commands**: using justfile
+- **Based On**: [@skyware/labeler](https://skyware.js.org/guides/labeler/introduction/getting-started/)
 
 ## Development Environment Setup
 
@@ -53,21 +50,55 @@ This will automatically install Node.js, npm, and just when you enter the projec
 
 This registers your labeler account as a labeler in atproto
 
-### Create Bluesky Account Labeler Account
+### Create Bluesky Account for your Labeler
 
-### Enter labeler did and password in .env
+At https://bsky.app/ (or your own PDS).
 
-Create .env
+
+### Generate Signing Key
+
+```bash
+just generate-signing-key
+```
+
+Save the generated SIGNING_KEY somewhere (ideally, a password manager)
+
+### Configure Secrets
+
+Create secrets.sh
+
+   cp secrets.sh.example secrets.sh
+
+This script should export LABELER_PASSWORD and SIGNING_KEY. Rather than hard-code these values, you may add commandlines
+for pulling these from your password manager.
+
+### Export Secrets
+
+Run:
+
+   source ./secrets.sh 
+
+### Configure Environment
+
+Create .env:
 
     cp env.example .env
 
-Then enter the labeler account DID and password, as well as the domain where you will host the labeler.
+Update the following in .env:
+- LABELER_DID: The DID of the account you created
+- LABELER_DOMAIN: The custom domain where you will host your labeler
+
+### Edit labels.json
+
+All the labels that your labeler can create must be included in this file.
 
 ### Run Setup Script
 
 ```bash
 just setup
 ```
+
+This will update your labeler's DID document and create the labeler records. Requires both LABELER_PASSWORD and SIGNING_KEY to be set.
 
 ### Fly.io Deployment
 
@@ -76,7 +107,7 @@ just setup
 just fly-setup
 ```
 
-Creates, configures, and deploys a fly app. Uses LABELER_DID, LABELER_PASSWORD, and SIGNING_KEY from .env. 
+Creates, configures, and deploys a fly app. Requires LABELER_PASSWORD and SIGNING_KEY to be set in your environment. 
 
 ### Custom Domain DNS and SSL Cert Setup
 

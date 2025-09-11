@@ -3,8 +3,12 @@
 .env.local
 .env.production
 
+.envrc
+
 # Node modules
 node_modules/
+
+secrets.sh
 
 # Database files
 *.db

@@ -3,12 +3,12 @@ set -e
 
 echo "🔑 Checking signing key..."
 if [ -z "${SIGNING_KEY}" ]; then
-    echo "🔑 Generating new signing key for setup..."
-    TEMP_SIGNING_KEY=$(openssl rand -hex 32)
-    echo "🔑 Generated temporary signing key (will save to .env only if setup succeeds)"
+    echo "❌ SIGNING_KEY environment variable is required but not set"
+    echo "💡 Generate a signing key first: just generate-signing-key"
+    echo "💡 Then add it to your environment and run setup again"
+    exit 1
 else
-    echo "🔑 Using existing signing key: ${SIGNING_KEY}"
-    TEMP_SIGNING_KEY="${SIGNING_KEY}"
+    echo "🔑 Using signing key: ${SIGNING_KEY:0:20}..."
 fi
 
 echo ""
@@ -23,7 +23,7 @@ if npx johnwarden-labeler setup \
     --did="${LABELER_DID}" \
     --password="${LABELER_PASSWORD}" \
     --endpoint="${ENDPOINT}" \
-    --signing-key="$TEMP_SIGNING_KEY" \
+    --signing-key="${SIGNING_KEY}" \
     --labels-config="./labels.json" 2>&1 | tee "$TEMP_OUTPUT_FILE"; then
     
     echo "---"
@@ -32,19 +32,8 @@ if npx johnwarden-labeler setup \
         # Extract PLC token (for verification only)
         PLC_TOKEN=$(grep "PLC_TOKEN=" "$TEMP_OUTPUT_FILE" | cut -d'=' -f2)
     
-    # Save signing key to .env if it was newly generated
-    if [ -z "${SIGNING_KEY}" ]; then
-        if grep -q "^SIGNING_KEY=" .env 2>/dev/null; then
-            sed -i.bak "s/^SIGNING_KEY=.*/SIGNING_KEY=$TEMP_SIGNING_KEY/" .env
-        else
-            echo "SIGNING_KEY=$TEMP_SIGNING_KEY" >> .env
-        fi
-        echo "🔑 Saved new signing key to .env"
-    fi
-    
         echo ""
-        echo "✅ Setup complete! Signing key saved to .env file."
-        echo "🔄 Run 'direnv reload' to use the new signing key in your environment."
+        echo "✅ Setup complete!"
     else
         echo "⚠️  No PLC_TOKEN found in output - setup may have failed."
         rm -f "$TEMP_OUTPUT_FILE"

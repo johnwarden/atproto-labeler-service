@@ -3,7 +3,6 @@
 
 set dotenv-load := true
 
-
 ENDPOINT := "https://$LABELER_DOMAIN"
 
 # Port configuration
@@ -56,8 +55,9 @@ logs:
     fly logs -a $APP_NAME
 
 # Set up or update labeler configuration
-# Only saves keys to .env if setup succeeds (atomic operation)
 setup:
+    #!/bin/zsh
+    source secrets.sh
     @echo "🚀 Setting up labeler with CLI arguments..."
     @echo "Using DID: ${LABELER_DID}"
     @echo "Using endpoint: {{ENDPOINT}}"
@@ -68,34 +68,37 @@ setup:
     @echo ""
     ./setup-labeler.sh
 
-# Generate a new signing key and save to .env
+# Generate a new signing key for user to save
 generate-signing-key:
     @echo "🔑 Generating new signing key..."
     #!/bin/bash
     NEW_KEY=$(openssl rand -hex 32); \
-    if grep -q "^SIGNING_KEY=" .env 2>/dev/null; then \
-        sed -i.bak "s/^SIGNING_KEY=.*/SIGNING_KEY=$NEW_KEY/" .env; \
-        echo "✅ Updated existing signing key in .env"; \
-    else \
-        echo "SIGNING_KEY=$NEW_KEY" >> .env; \
-        echo "✅ Added new signing key to .env"; \
-    fi
-    @echo "🔄 Reload your shell or run 'direnv reload' to use the new key"
+    echo ""; \
+    echo "🔑 NEW SIGNING KEY GENERATED:"; \
+    echo "SIGNING_KEY=$NEW_KEY"; \
+    echo ""; \
+    echo "Please save this somewhere safe, then export the SIGNING_KEY environment variable."; \
+    echo ""; \
+    echo "💡 Consider adding to a password manager and exposing via secrets.sh. See README.md"; \
 
 # Clears the labeler -- reset the labeler account to a regular account.
 # Note: Still requires interactive PLC token confirmation
 clear:
+    #!/bin/zsh
+    source secrets.sh
     npx johnwarden-labeler clear --did="${LABELER_DID}" --password="${LABELER_PASSWORD}"
 
 # Recreate the labeler -- fully non-interactive
 recreate:
+    #!/bin/zsh
+    source secrets.sh
     npx johnwarden-labeler recreate --did="${LABELER_DID}" --password="${LABELER_PASSWORD}"
 
 # Add a new label definition
 add-label-def:
-    @echo "🏷️ Adding new label definition..."
-    npx johnwarden-labeler label add
-
+    #!/bin/zsh
+    source secrets.sh
+    npx johnwarden-labeler label add --did="${LABELER_DID}" --password="${LABELER_PASSWORD}"
 
 # === Labeling Operations ===
 
