@@ -125,11 +125,20 @@ async function startHttpApiServer(labelerServer) {
     // Endpoint to manually label posts (internal IPv6 only)
     internalApp.get('/label', async (req, res) => {
         try {
-            const { uri, val: requestedLabel, neg } = req.query;
+            const { uri, val: labelVal, neg } = req.query;
             
             if (!uri) {
                 return res.status(400).json({
                     error: 'Missing uri parameter',
+                    usage: 'GET /label?uri=<at_uri_or_bsky_url>&val=<label_identifier>&neg=<true|false>',
+                    availableLabels: availableLabels.map(l => l.identifier)
+                });
+            }
+            
+            if (!labelVal || labelVal.trim() === '') {
+                return res.status(400).json({
+                    error: 'Missing val parameter',
+                    message: 'The val parameter is required and must specify a valid label identifier',
                     usage: 'GET /label?uri=<at_uri_or_bsky_url>&val=<label_identifier>&neg=<true|false>',
                     availableLabels: availableLabels.map(l => l.identifier)
                 });
@@ -151,32 +160,17 @@ async function startHttpApiServer(labelerServer) {
                 }
             }
             
-            // Determine which label to use
-            let labelVal = requestedLabel;
-            if (!labelVal || labelVal.trim() === '') {
-                // Use the first label as default
-                labelVal = availableLabels[0]?.identifier;
-                if (!labelVal) {
-                    return res.status(500).json({
-                        error: 'No labels available',
-                        message: 'No labels found in labels.json'
-                    });
-                }
-                console.log(`🏷️ No label specified, using default: ${labelVal}`);
-            } else {
-                // Validate that the requested label exists
-                const labelExists = availableLabels.some(l => l.identifier === labelVal);
-                if (!labelExists) {
-                    return res.status(400).json({
-                        error: 'Invalid label',
-                        message: `Label '${labelVal}' not found`,
-                        availableLabels: availableLabels.map(l => l.identifier)
-                    });
-                }
-                console.log(`🏷️ Using requested label: ${labelVal}`);
+            // Validate that the requested label exists
+            const labelExists = availableLabels.some(l => l.identifier === labelVal);
+            if (!labelExists) {
+                return res.status(400).json({
+                    error: 'Invalid label',
+                    message: `Label '${labelVal}' not found`,
+                    availableLabels: availableLabels.map(l => l.identifier)
+                });
             }
             
-            console.log(`🏷️ Manual labeling request: ${uri} with label: ${labelVal}${isNegative ? ' (NEGATIVE)' : ''}`);
+            console.log(`🏷️ Labeling request: ${uri} with label: ${labelVal}${isNegative ? ' (NEGATIVE)' : ''}`);
             
             // Convert to at:// URI if needed
             const atUri = await convertToAtUri(uri);
