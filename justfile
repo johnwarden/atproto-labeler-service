@@ -108,16 +108,16 @@ query-labels:
     curl -s "{{ENDPOINT}}/xrpc/com.atproto.label.queryLabels" | jq .
 
 # Add label to a post (optional second argument for label, defaults to first label in labels.json)
-add-label URI LABEL="":
+add-label URI VAL="":
     @echo "🏷️ Adding label to: {{URI}}"
     @echo "🔗 Using internal endpoint: {{INTERNAL_ENDPOINT}}"
-    curl -s "{{INTERNAL_ENDPOINT}}/label?uri={{URI}}&label={{LABEL}}" | jq .
+    curl -s "{{INTERNAL_ENDPOINT}}/label?uri={{URI}}&val={{VAL}}" | jq .
 
 # Add negative label to a post (removes/negates a previous label)
-negate-label URI LABEL="":
+negate-label URI VAL="":
     @echo "🏷️ Adding NEGATIVE label to: {{URI}}"
     @echo "🔗 Using internal endpoint: {{INTERNAL_ENDPOINT}}"
-    curl -s "{{INTERNAL_ENDPOINT}}/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
+    curl -s "{{INTERNAL_ENDPOINT}}/label?uri={{URI}}&val={{VAL}}&neg=true" | jq .
 
 # Query labels for a specific URI
 query-uri URI:
@@ -138,13 +138,13 @@ dev:
     node --watch index.js
 
 # Add label to a post (local development server)
-add-label-dev URI LABEL="":
+add-label-dev URI VAL="":
     @echo "🏷️ Adding label to: {{URI}} (local dev)"
-    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&label={{LABEL}}" | jq .
+    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&val={{VAL}}" | jq .
 
-negate-label-dev URI LABEL="":
+negate-label-dev URI VAL="":
     @echo "🏷️ Adding NEGATIVE label to: {{URI}} (local dev)"
-    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&label={{LABEL}}&neg=true" | jq .
+    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&val={{VAL}}&neg=true" | jq .
 
 
 # Query labels from local development server

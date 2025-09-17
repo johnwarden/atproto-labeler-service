@@ -4,7 +4,7 @@ This is a generic AT Protocol labeler service, with some utilities for making it
 
 The service implements the public ATProto labeler API, as well as a private HTTP endpoint for adding and removing labels. It does not implement any labeling logic -- your applications can add labels by calling the internal labeler API. For example:
 
-    curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&label=needs-context"
+    curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&val=needs-context"
 
 This package helps you create the ATProto records needed for your labeler to be recognized, automating some of the steps in the [Skyware Labeler Getting Started guide](https://skyware.js.org/guides/labeler/introduction/getting-started/). 
 

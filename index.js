@@ -125,12 +125,12 @@ async function startHttpApiServer(labelerServer) {
     // Endpoint to manually label posts (internal IPv6 only)
     internalApp.get('/label', async (req, res) => {
         try {
-            const { uri, label: requestedLabel, neg } = req.query;
+            const { uri, val: requestedLabel, neg } = req.query;
             
             if (!uri) {
                 return res.status(400).json({
                     error: 'Missing uri parameter',
-                    usage: 'GET /label?uri=<at_uri_or_bsky_url>&label=<label_identifier>&neg=<true|false>',
+                    usage: 'GET /label?uri=<at_uri_or_bsky_url>&val=<label_identifier>&neg=<true|false>',
                     availableLabels: availableLabels.map(l => l.identifier)
                 });
             }
@@ -146,7 +146,7 @@ async function startHttpApiServer(labelerServer) {
                     return res.status(400).json({
                         error: 'Invalid neg parameter',
                         message: 'neg parameter must be "true", "false", "1", "0", or omitted',
-                        usage: 'GET /label?uri=<at_uri_or_bsky_url>&label=<label_identifier>&neg=<true|false>'
+                        usage: 'GET /label?uri=<at_uri_or_bsky_url>&val=<label_identifier>&neg=<true|false>'
                     });
                 }
             }
