@@ -7,5 +7,14 @@
     "severity": "alert",
     "blurs": "none",
     "defaultSetting": "warn"
+  },
+  {
+    "identifier": "proposed-label-needs-context",
+    "name": "Rate Proposed Community Notes",
+    "description": "Readers added context they thought people might want to know",
+    "adultOnly": false,
+    "severity": "alert",
+    "blurs": "none",
+    "defaultSetting": "warn"
   }
 ]
