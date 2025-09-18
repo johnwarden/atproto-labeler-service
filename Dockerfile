@@ -6,12 +6,20 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including devDependencies for building)
+RUN npm ci
 
-# Copy application files
-COPY . .
+# Copy source files
+COPY index.ts ./
+COPY labels.json ./
+
+# Build TypeScript
+RUN npm run build
+
+# Remove devDependencies to reduce image size
+RUN npm ci --only=production && npm cache clean --force
 
 # Create a non-root user
 RUN groupadd -r labeler && useradd -r -g labeler labeler
@@ -21,5 +29,5 @@ USER labeler
 # Expose ports (fly.io will set PORT and INTERNAL_API_PORT environment variables)
 EXPOSE 8080 8081
 
-# Start the application
-CMD ["node", "index.js"]
+# Start the application from the compiled JavaScript
+CMD ["node", "dist/index.js"]

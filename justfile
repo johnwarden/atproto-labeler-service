@@ -135,7 +135,7 @@ test-api:
 # Run locally for development
 dev:
     @echo "🔧 Starting local development server..."
-    node --watch index.js
+    node --watch --import=tsx index.ts
 
 # Add label to a post (local development server)
 add-label-dev URI VAL="":
@@ -163,7 +163,7 @@ test-api-dev:
     @echo "🔍 Internal API health check:"
     curl -s "http://localhost:{{INTERNAL_API_PORT}}/health"
     @echo "\n🧪 Testing label endpoint with example URL (default label):"
-    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
+    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?val=note&uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
 
 # === Private Network Setup ===
 
@@ -227,6 +227,8 @@ fly-dashboard:
     
 # === Development ===
 
+test:
+    npm run test
 
 # Build the forked labeler (now linked)
 build-labeler-package:
