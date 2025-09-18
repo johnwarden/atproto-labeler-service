@@ -8,8 +8,13 @@ ENDPOINT := "https://$LABELER_DOMAIN"
 # Port configuration
 MAIN_PORT := "$PORT"
 INTERNAL_API_HOST := "$APP_NAME.internal"
-INTERNAL_API_PORT := "$INTERNAL_API_PORT"
+INTERNAL_API_PORT := "8081"
 INTERNAL_ENDPOINT := "http://" + INTERNAL_API_HOST + ":" + INTERNAL_API_PORT
+
+
+MAIN_PORT_DEV := "$PORT"
+INTERNAL_API_PORT_DEV := "$INTERNAL_API_PORT"
+INTERNAL_ENDPOINT_DEV := "http://localhost:" + INTERNAL_API_PORT_DEV
 
 
 # Default recipe - show available commands
@@ -17,7 +22,7 @@ default:
     @just --list
 
 # One-command health check of everything
-status: labeler-status health fly-status
+status: labeler-status fly-status health 
 
 # Check labeler service record and configuration  
 labeler-status:
@@ -140,30 +145,30 @@ dev:
 # Add label to a post (local development server)
 add-label-dev URI VAL="":
     @echo "🏷️ Adding label to: {{URI}} (local dev)"
-    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&val={{VAL}}" | jq .
+    curl -s "{{INTERNAL_ENDPOINT_DEV}}/label?uri={{URI}}&val={{VAL}}" | jq .
 
 negate-label-dev URI VAL="":
     @echo "🏷️ Adding NEGATIVE label to: {{URI}} (local dev)"
-    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?uri={{URI}}&val={{VAL}}&neg=true" | jq .
+    curl -s "{{INTERNAL_ENDPOINT_DEV}}/label?uri={{URI}}&val={{VAL}}&neg=true" | jq .
 
 
 # Query labels from local development server
 query-labels-dev:
     @echo "🏷️ Querying all labels from local AT Protocol endpoint..."
-    curl -s "http://localhost:{{MAIN_PORT}}/xrpc/com.atproto.label.queryLabels" | jq .
+    curl -s "http://localhost:{{MAIN_PORT_DEV}}/xrpc/com.atproto.label.queryLabels" | jq .
 
 # Query labels for a specific URI (local development server)
 query-uri-dev URI:
     @echo "🔍 Querying labels for: {{URI}} (local dev)"
-    curl -s "http://localhost:{{MAIN_PORT}}/xrpc/com.atproto.label.queryLabels?uris={{URI}}" | jq .
+    curl -s "http://localhost:{{MAIN_PORT_DEV}}/xrpc/com.atproto.label.queryLabels?uris={{URI}}" | jq .
 
 # Test local development API endpoints
 test-api-dev:
     @echo "🧪 Testing local development API endpoints..."
     @echo "🔍 Internal API health check:"
-    curl -s "http://localhost:{{INTERNAL_API_PORT}}/health"
+    curl -s "{{INTERNAL_ENDPOINT_DEV}}/health"
     @echo "\n🧪 Testing label endpoint with example URL (default label):"
-    curl -s "http://localhost:{{INTERNAL_API_PORT}}/label?val=note&uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
+    curl -s "{{INTERNAL_ENDPOINT_DEV}}/label?val=note&uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" | jq .
 
 # === Private Network Setup ===
 
@@ -227,6 +232,7 @@ fly-dashboard:
     
 # === Development ===
 
+# Run tests
 test:
     npm run test
 
@@ -252,7 +258,8 @@ unlink-labeler:
     npm install ../johnwarden-labeler/johnwarden-labeler-0.2.1.tgz
     @echo "✅ Back to packaged installation."
 
-docker-run:
+# Build docker image and run service inside docker image
+docker-dev:
     docker build -t atproto-labeler-service .
     docker run -p $PORT:$PORT -p $INTERNAL_API_PORT:$INTERNAL_API_PORT \
       -e LABELER_DID="did:plc:test" \
