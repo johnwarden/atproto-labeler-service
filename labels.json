@@ -1,17 +1,17 @@
 [
   {
-    "identifier": "needs-context",
+    "identifier": "annotation",
     "name": "Readers Added Context",
-    "description": "The Community Notes algorithm has rated a note on this post as \"helpful\"",
+    "description": "Readers added context they thought people might want to know",
     "adultOnly": false,
     "severity": "alert",
     "blurs": "none",
     "defaultSetting": "warn"
   },
   {
-    "identifier": "proposed-label-needs-context",
+    "identifier": "proposed-annotation",
     "name": "Rate Proposed Community Notes",
-    "description": "Readers added context they thought people might want to know",
+    "description": "This post has proposed community notes that need more ratings",
     "adultOnly": false,
     "severity": "alert",
     "blurs": "none",
