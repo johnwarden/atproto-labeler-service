@@ -251,3 +251,12 @@ unlink-labeler:
     @echo "Installing from package..."
     npm install ../johnwarden-labeler/johnwarden-labeler-0.2.1.tgz
     @echo "✅ Back to packaged installation."
+
+docker-run:
+    docker build -t atproto-labeler-service .
+    docker run -p $PORT:$PORT -p $INTERNAL_API_PORT:$INTERNAL_API_PORT \
+      -e LABELER_DID="did:plc:test" \
+      -e SIGNING_KEY="d0852cbab741b9b1ad19014294619aab6937355387ff130fac4d33949d6eb0bf" \
+      -e PORT="$PORT" \
+      -e INTERNAL_API_PORT="$INTERNAL_API_PORT" \
+      atproto-labeler-service
