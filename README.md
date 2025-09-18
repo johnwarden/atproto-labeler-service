@@ -4,7 +4,7 @@ This is a generic AT Protocol labeler service, with some utilities for making it
 
 The service implements the public ATProto labeler API, as well as a private HTTP endpoint for adding and removing labels. It does not implement any labeling logic -- your applications can add labels by calling the internal labeler API. For example:
 
-    curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&val=needs-context"
+    curl "$INTERNAL_ENDPOINT/label?uri=https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s&val=note"
 
 This package helps you create the ATProto records needed for your labeler to be recognized, automating some of the steps in the [Skyware Labeler Getting Started guide](https://skyware.js.org/guides/labeler/introduction/getting-started/). 
 
@@ -186,10 +186,10 @@ The API supports applying labels to posts with optional label and neg parameters
 just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s"
 
 # Add specific label to a post using justfile
-just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "note"
 
 # Add negative label to remove/negate a previous label using justfile
-just add-negative-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+just add-negative-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "note"
 
 ```
 
@@ -213,10 +213,10 @@ just status
 just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s"
 
 # Add specific label to post
-just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+just add-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "note"
 
 # Add negative label to remove/negate a previous label
-just add-negative-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "needs-context"
+just add-negative-label "https://bsky.app/profile/thecraigmancometh.bsky.social/post/3lvl3tdft7c2s" "note"
 
 # Query all labels
 just query-labels

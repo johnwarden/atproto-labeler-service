@@ -1,6 +1,6 @@
 [
   {
-    "identifier": "needs-context",
+    "identifier": "note",
     "name": "Readers Added Context",
     "description": "The Community Notes algorithm has rated a note on this post as \"helpful\"",
     "adultOnly": false,
@@ -9,7 +9,7 @@
     "defaultSetting": "warn"
   },
   {
-    "identifier": "proposed-label-needs-context",
+    "identifier": "proposed-note",
     "name": "Rate Proposed Community Notes",
     "description": "Readers added context they thought people might want to know",
     "adultOnly": false,
