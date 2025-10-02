@@ -16,5 +16,5 @@
     "severity": "alert",
     "blurs": "none",
     "defaultSetting": "warn"
-  },
+  }
 ]
