@@ -63,14 +63,14 @@ logs:
 setup:
     #!/bin/zsh
     source secrets.sh
-    @echo "🚀 Setting up labeler with CLI arguments..."
-    @echo "Using DID: ${LABELER_DID}"
-    @echo "Using endpoint: {{ENDPOINT}}"
-    @echo "Using labels config: ./labels.json"
-    @echo ""
-    @echo "⚠️  You will need to enter the PLC token from your email when prompted."
-    @echo "📧 The setup will pause to wait for your email confirmation code."
-    @echo ""
+    echo "🚀 Setting up labeler with CLI arguments..."
+    echo "Using DID: ${LABELER_DID}"
+    echo "Using endpoint: {{ENDPOINT}}"
+    echo "Using labels config: ./labels.json"
+    echo ""
+    echo "⚠️  You will need to enter the PLC token from your email when prompted."
+    echo "📧 The setup will pause to wait for your email confirmation code."
+    echo ""
     ./setup-labeler.sh
 
 # Generate a new signing key for user to save
