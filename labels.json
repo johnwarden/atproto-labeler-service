@@ -2,7 +2,7 @@
   {
     "identifier": "annotation",
     "name": "Readers Added Context",
-    "description": "Readers added context they thought people might want to know",
+    "description": "Readers added context they thought people might want to know. Find out more at https://bluenotes.social",
     "adultOnly": false,
     "severity": "alert",
     "blurs": "none",
@@ -11,10 +11,10 @@
   {
     "identifier": "proposed-annotation",
     "name": "Rate Proposed Community Notes",
-    "description": "This post has proposed community notes that need more ratings",
+    "description": "This post has proposed community notes that need more ratings. Find out more at https://bluenotes.social",
     "adultOnly": false,
     "severity": "alert",
     "blurs": "none",
     "defaultSetting": "warn"
-  }
+  },
 ]
