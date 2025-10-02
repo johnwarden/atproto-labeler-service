@@ -108,9 +108,8 @@ add-label-def:
 # === Labeling Operations ===
 
 # Query labels from AT Protocol endpoint
-query-labels:
-    @echo "🏷️ Querying all labels from AT Protocol endpoint..."
-    curl -s "{{ENDPOINT}}/xrpc/com.atproto.label.queryLabels" | jq .
+query-labels CURSOR="0":
+    @curl -s "{{ENDPOINT}}/xrpc/com.atproto.label.queryLabels?cursor={{CURSOR}}&limit=250" | jq .
 
 # Add label to a post (optional second argument for label, defaults to first label in labels.json)
 add-label URI VAL="":
@@ -126,7 +125,6 @@ negate-label URI VAL="":
 
 # Query labels for a specific URI
 query-uri URI:
-    @echo "🔍 Querying labels for: {{URI}}"
     curl -s "{{ENDPOINT}}/xrpc/com.atproto.label.queryLabels?uris={{URI}}" | jq .
 
 # Test API endpoint with example URL
@@ -154,7 +152,6 @@ negate-label-dev URI VAL="":
 
 # Query labels from local development server
 query-labels-dev:
-    @echo "🏷️ Querying all labels from local AT Protocol endpoint..."
     curl -s "http://localhost:{{MAIN_PORT_DEV}}/xrpc/com.atproto.label.queryLabels" | jq .
 
 # Query labels for a specific URI (local development server)
